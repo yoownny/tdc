@@ -1,0 +1,238 @@
+stages:
+  - build
+  - deploy-dev
+  - deploy-prod
+
+variables:
+  # 배포 서버 정보
+  PROD_DEPLOY_SERVER: "www.tdc-game.online"
+  DEV_DEPLOY_SERVER: "dev.tdc-game.online"
+  DEPLOY_USER: "ubuntu"
+
+# 백엔드 빌드
+build-backend:
+  stage: build
+  image: openjdk:21-slim
+  before_script:
+    - apt-get update && apt-get install -y git
+    - |
+      # master 브랜치에서는 머지 소스 확인
+      if [ "$CI_COMMIT_BRANCH" = "master" ]; then
+        # 최근 커밋 메시지나 머지 커밋에서 develop-be 관련 확인
+        if ! (git log -1 --pretty=format:"%s" | grep -E "(develop-be|backend|be|Merge.*develop-be)" || \
+              git log --merges -1 --pretty=format:"%s" | grep -E "develop-be"); then
+          echo "백엔드 관련 변경사항이 없어 빌드를 건너뜁니다"
+          exit 0
+        fi
+        echo "백엔드 관련 변경사항 감지됨"
+      fi
+  script:
+    - cd backend
+    - chmod +x gradlew
+    - ./gradlew clean build -x test
+  artifacts:
+    paths:
+      - backend/build/libs/*.jar
+      - backend/Dockerfile
+      - ./docker-compose.yml
+      - ./docker-compose.dev.yml
+      - ./nginx.conf
+      - ./nginx.dev.conf
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop-be"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+
+# 프론트엔드 빌드
+build-frontend:
+  stage: build
+  image: node:20-alpine
+  before_script:
+    - apk add --no-cache git
+    - |
+      # master 브랜치에서는 머지 소스 확인
+      if [ "$CI_COMMIT_BRANCH" = "master" ]; then
+        # 최근 커밋 메시지나 머지 커밋에서 develop-fe 관련 확인
+        if ! (git log -1 --pretty=format:"%s" | grep -E "(develop-fe|frontend|fe|Merge.*develop-fe)" || \
+              git log --merges -1 --pretty=format:"%s" | grep -E "develop-fe"); then
+          echo "프론트엔드 관련 변경사항이 없어 빌드를 건너뜁니다"
+          exit 0
+        fi
+        echo "프론트엔드 관련 변경사항 감지됨"
+      fi
+  script:
+    - cd frontend
+    - npm install
+    - |
+      cat >> .env.production.local << EOF
+      VITE_GOOGLE_REDIRECT_URI=${VITE_GOOGLE_REDIRECT_URI}
+      VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+      VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}
+      VITE_AMPLITUDE_API_KEY=${VITE_AMPLITUDE_API_KEY}
+      EOF
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop-fe"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+
+# 개발 서버 배포
+deploy-development:
+  stage: deploy-dev
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+  script:
+    # 개발 서버 디렉토리 생성 및 권한 설정
+    - ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "sudo mkdir -p /home/ubuntu/app-dev/backend/build/libs"
+    - ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "sudo mkdir -p /home/ubuntu/app-dev/frontend"
+    - ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "sudo chown -R ubuntu:ubuntu /home/ubuntu/app-dev"
+    - ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "sudo chmod -R 755 /home/ubuntu/app-dev"
+
+    # 백엔드 파일 복사 (있는 경우에만)
+    - |
+      if ls backend/build/libs/*.jar 1> /dev/null 2>&1; then
+        echo "백엔드 파일 복사 중..."
+        scp backend/build/libs/*.jar ${DEPLOY_USER}@${DEV_DEPLOY_SERVER}:/home/ubuntu/app-dev/backend/build/libs/
+        scp backend/Dockerfile ${DEPLOY_USER}@${DEV_DEPLOY_SERVER}:/home/ubuntu/app-dev/backend/
+      else
+        echo "백엔드 파일이 없습니다. 백엔드 복사를 건너뜁니다."
+      fi
+
+    # 설정 파일 복사
+    - scp docker-compose.dev.yml ${DEPLOY_USER}@${DEV_DEPLOY_SERVER}:/home/ubuntu/app-dev/docker-compose.yml
+    - scp nginx.dev.conf ${DEPLOY_USER}@${DEV_DEPLOY_SERVER}:/home/ubuntu/app-dev/nginx.dev.conf
+
+    # 프론트엔드 파일 복사 (있는 경우에만)
+    - |
+      if [ -d "frontend/dist" ]; then
+        echo "프론트엔드 파일 복사 중..."
+        rsync -avz --delete frontend/dist/ ${DEPLOY_USER}@${DEV_DEPLOY_SERVER}:/home/ubuntu/app-dev/frontend/
+      else
+        echo "프론트엔드 파일이 없습니다. 프론트엔드 복사를 건너뜁니다."
+      fi
+
+    # 기존 컨테이너 정리
+    - ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "cd /home/ubuntu/app-dev && docker compose down --remove-orphans || true"
+
+    # 개발 서버 시작 (조건부)
+    - |
+      if ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "ls /home/ubuntu/app-dev/backend/build/libs/*.jar" 1> /dev/null 2>&1; then
+        echo "백엔드가 있어 전체 서비스를 시작합니다."
+        ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "
+          cd /home/ubuntu/app-dev && 
+          DB_URL='${DB_URL}' \
+          DB_USERNAME='${DB_USERNAME}' \
+          DB_PASSWORD='${DB_PASSWORD}' \
+          DB_DRIVER='${DB_DRIVER}' \
+          SPRING_JWT_SECRET='${SPRING_JWT_SECRET}' \
+          GMS_API_KEY='${GMS_API_KEY}' \
+          VITE_AMPLITUDE_API_KEY='${VITE_AMPLITUDE_API_KEY}' \
+          docker compose up -d --build
+        "
+      else
+        echo "백엔드가 없어 프론트엔드만 시작합니다."
+        ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "
+          cd /home/ubuntu/app-dev && 
+          VITE_AMPLITUDE_API_KEY='${VITE_AMPLITUDE_API_KEY}' \
+          docker compose up -d nginx-dev
+        "
+      fi
+
+    # 개발용 Redis 연결 (백엔드가 있는 경우에만)
+    - |
+      if ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "docker ps | grep tdc-app-dev" 1> /dev/null 2>&1; then
+        echo "백엔드 컨테이너가 실행 중이므로 Redis를 연결합니다."
+        ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "docker network connect app-dev_dev-network my-redis || true"
+      else
+        echo "백엔드가 없어 Redis 연결을 건너뜁니다."
+      fi
+
+    # 정리
+    - ssh ${DEPLOY_USER}@${DEV_DEPLOY_SERVER} "docker image prune -f"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^develop-.*$/'
+
+# 배포 서버 배포 (기존 로직)
+deploy-production:
+  stage: deploy-prod
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+  script:
+    # 배포 서버 디렉토리 생성 및 권한 설정
+    - ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "sudo mkdir -p /home/ubuntu/app/backend/build/libs"
+    - ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "sudo mkdir -p /home/ubuntu/app/frontend"
+    - ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "sudo chown -R ubuntu:ubuntu /home/ubuntu/app"
+    - ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "sudo chmod -R 755 /home/ubuntu/app"
+
+    # 백엔드 파일 복사 (있는 경우에만)
+    - |
+      if ls backend/build/libs/*.jar 1> /dev/null 2>&1; then
+        echo "백엔드 파일 복사 중..."
+        scp backend/build/libs/*.jar ${DEPLOY_USER}@${PROD_DEPLOY_SERVER}:/home/ubuntu/app/backend/build/libs/
+        scp backend/Dockerfile ${DEPLOY_USER}@${PROD_DEPLOY_SERVER}:/home/ubuntu/app/backend/
+      else
+        echo "백엔드 파일이 없습니다. 백엔드 복사를 건너뜁니다."
+      fi
+
+    # 설정 파일 복사
+    - scp docker-compose.yml ${DEPLOY_USER}@${PROD_DEPLOY_SERVER}:/home/ubuntu/app/
+    - scp nginx.conf ${DEPLOY_USER}@${PROD_DEPLOY_SERVER}:/home/ubuntu/app/
+
+    # 프론트엔드 파일 복사 (있는 경우에만)
+    - |
+      if [ -d "frontend/dist" ]; then
+        echo "프론트엔드 파일 복사 중..."
+        rsync -avz --delete frontend/dist/ ${DEPLOY_USER}@${PROD_DEPLOY_SERVER}:/home/ubuntu/app/frontend/
+      else
+        echo "프론트엔드 파일이 없습니다. 프론트엔드 복사를 건너뜁니다."
+      fi
+
+    # 기존 컨테이너 정리
+    - ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "cd /home/ubuntu/app && docker compose down --remove-orphans || true"
+
+    # 배포 서버 시작 (조건부)
+    - |
+      if ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "ls /home/ubuntu/app/backend/build/libs/*.jar" 1> /dev/null 2>&1; then
+        echo "백엔드가 있어 전체 서비스를 시작합니다."
+        ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "
+          cd /home/ubuntu/app && 
+          DB_URL='${DB_URL}' \
+          DB_USERNAME='${DB_USERNAME}' \
+          DB_PASSWORD='${DB_PASSWORD}' \
+          DB_DRIVER='${DB_DRIVER}' \
+          SPRING_JWT_SECRET='${SPRING_JWT_SECRET}' \
+          GMS_API_KEY='${GMS_API_KEY}' \
+          VITE_AMPLITUDE_API_KEY='${VITE_AMPLITUDE_API_KEY}' \
+          docker compose up -d --build
+        "
+      else
+        echo "백엔드가 없어 프론트엔드만 시작합니다."
+        ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "
+          cd /home/ubuntu/app && 
+          VITE_AMPLITUDE_API_KEY='${VITE_AMPLITUDE_API_KEY}' \
+          docker compose up -d nginx
+        "
+      fi
+
+    # 기존 Redis를 같은 네트워크에 연결
+    - ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "docker network connect app_default my-redis || true"
+
+    # 정리
+    - ssh ${DEPLOY_USER}@${PROD_DEPLOY_SERVER} "docker image prune -f"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'

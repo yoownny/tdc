@@ -1,0 +1,115 @@
+import type { ProblemRank } from "@/types/problem/ranking";
+
+export const mockRankingData: ProblemRank[] = [
+  {
+    rank: 1,
+    problemId: 101,
+    title: "미스터리한 실종 사건",
+    likes: 245,
+    playCount: 1234,
+  },
+  {
+    rank: 2,
+    problemId: 102,
+    title: "고급 레스토랑의 살인",
+    likes: 198,
+    playCount: 987,
+  },
+  {
+    rank: 3,
+    problemId: 103,
+    title: "고대 유물 도난 사건",
+    likes: 176,
+    playCount: 856,
+  },
+  {
+    rank: 4,
+    problemId: 104,
+    title: "호화 여객선의 비밀",
+    likes: 154,
+    playCount: 743,
+  },
+  {
+    rank: 5,
+    problemId: 105,
+    title: "고층 빌딩의 화재",
+    likes: 132,
+    playCount: 621,
+  },
+  {
+    rank: 6,
+    problemId: 106,
+    title: "고급 호텔의 도난",
+    likes: 118,
+    playCount: 589,
+  },
+  {
+    rank: 7,
+    problemId: 107,
+    title: "박물관의 미스터리",
+    likes: 105,
+    playCount: 456,
+  },
+  {
+    rank: 8,
+    problemId: 108,
+    title: "고급 클럽의 비밀",
+    likes: 92,
+    playCount: 398,
+  },
+  {
+    rank: 9,
+    problemId: 109,
+    title: "고대 성의 유령",
+    likes: 87,
+    playCount: 345,
+  },
+  {
+    rank: 10,
+    problemId: 110,
+    title: "고급 요트의 사고",
+    likes: 76,
+    playCount: 298,
+  },
+  {
+    rank: 11,
+    problemId: 111,
+    title: "고급 카지노의 도박",
+    likes: 65,
+    playCount: 267,
+  },
+  {
+    rank: 12,
+    problemId: 112,
+    title: "고대 피라미드의 비밀",
+    likes: 58,
+    playCount: 234,
+  },
+  {
+    rank: 13,
+    problemId: 113,
+    title: "고급 스파의 살인",
+    likes: 52,
+    playCount: 198,
+  },
+  {
+    rank: 14,
+    problemId: 114,
+    title: "고대 신전의 저주",
+    likes: 47,
+    playCount: 176,
+  },
+  {
+    rank: 15,
+    problemId: 115,
+    title: "고급 갤러리의 도난",
+    likes: 43,
+    playCount: 154,
+  },
+];
+
+export const mockRankingResponse = {
+  ranking: mockRankingData,
+  totalCount: 156,
+  lastUpdated: new Date().toISOString(),
+};

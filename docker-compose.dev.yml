@@ -1,0 +1,52 @@
+services:
+  # Spring Boot 백엔드 애플리케이션 (개발 서버)
+  tdc-app-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tdc-app-dev
+    expose:
+      - "8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DRIVER=${DB_DRIVER}
+      - SPRING_JWT_SECRET=${SPRING_JWT_SECRET}
+      - GMS_API_KEY=${GMS_API_KEY}
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+  # Nginx 웹 서버 및 리버스 프록시 (개발 서버)
+  nginx-dev:
+    image: nginx:alpine
+    container_name: nginx-dev
+    ports:
+      - "8443:8443"
+      - "8080:80"
+    volumes:
+      # Nginx 설정 파일
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      # SSL 인증서
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # 프론트엔드 빌드 파일
+      - ./frontend:/usr/share/nginx/html:ro
+      # 로그 파일 (디버깅용)
+      - nginx_dev_logs:/var/log/nginx
+    depends_on:
+      - tdc-app-dev
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+# 데이터 영속성을 위한 볼륨
+volumes:
+  nginx_dev_logs:
+    driver: local
+
+# 개발 서버 전용 네트워크
+networks:
+  dev-network:
+    driver: bridge

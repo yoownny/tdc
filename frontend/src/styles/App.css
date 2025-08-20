@@ -1,0 +1,334 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@font-face {
+  font-family: "Ownglyph_ryurue-Rg";
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2405-2@1.0/Ownglyph_ryurue-Rg.woff2")
+    format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* 게임 테마 커스텀 색상 - 간단한 클래스명 */
+  --color-primary: #faf8f3; /* bg-primary - 더 밝은 크림 */
+  --color-secondary: #f8f6f0; /* bg-secondary - 연한 베이지 */
+  --color-border: #e8dcc0; /* border-border - 따뜻한 테두리 */
+  --color-white: #ffffff; /* text-white - 흰색 */
+  --color-gray: #2d5016; /* text-gray - 로고 녹색 */
+  --color-accent: #226b1c; /* 로고색으로 변경 */
+  --color-accent-dark: #1d5717; /* point-600 사용 */
+
+  /* Danger Colors */
+  --color-danger-300: #ff657c;
+  --color-danger-400: #ff3e5b;
+
+  /* Warning Colors */
+  --color-warning-300: #ff657c;
+  --color-warning-400: #ff3e5b;
+
+  /* Gray Colors */
+  --color-gray-100: #f7f8fa;
+  --color-gray-200: #eaebed;
+  --color-gray-300: #cacdd2;
+  --color-gray-400: #9fa4a8;
+  --color-gray-500: #73787e;
+  --color-gray-600: #474c52;
+  --color-gray-700: #27282c;
+  --color-gray-800: #121316;
+  --color-gray-900: #0a0b0d;
+
+  /* Point Colors - Green Theme based on #226b1c */
+  --color-point-50: #f0f9f0; /* 가장 밝은 녹색 배경 */
+  --color-point-100: #dcf2dc; /* 연한 녹색 */
+  --color-point-200: #8bbf47; /* 요청하신 연두색 */
+  --color-point-300: #5a9934; /* 중간 녹색 */
+  --color-point-400: #328a25; /* 조금 더 진한 녹색 */
+  --color-point-500: #226b1c; /* 메인 로고색 */
+  --color-point-600: #1d5717; /* 더 진한 로고색 */
+  --color-point-700: #184212; /* 진한 녹색 */
+  --color-point-800: #122e0d; /* 매우 진한 녹색 */
+  --color-point-900: #0d1a09; /* 가장 진한 녹색 */
+
+  /* Font Weights */
+  --font-weight-extra-light: 200;
+  --font-weight-regular: 400;
+  --font-weight-semi-bold: 600;
+  --font-weight-extra-bold: 800;
+
+  /* Font Sizes - PC */
+  --font-size-pc-title-lg: 48px;
+  --line-height-pc-title-lg: 150%;
+  --font-size-pc-title-md: 36px;
+  --line-height-pc-title-md: 150%;
+  --font-size-pc-title-sm: 24px;
+  --line-height-pc-title-sm: 150%;
+  --font-size-pc-body-xl: 60px;
+  --line-height-pc-body-xl: 125%;
+  --font-size-pc-body-lg: 18px;
+  --line-height-pc-body-lg: 125%;
+  --font-size-pc-body-md: 16px;
+  --line-height-pc-body-md: 125%;
+  --font-size-pc-body-sm: 14px;
+  --line-height-pc-body-sm: 125%;
+  --font-size-pc-caption: 12px;
+  --line-height-pc-caption: 125%;
+
+  /* Custom Font Size Classes */
+  --font-size-pc-title-lg: 48px;
+  --font-size-pc-title-md: 36px;
+  --font-size-pc-title-sm: 24px;
+  --font-size-pc-body-xl: 60px;
+  --font-size-pc-body-lg: 18px;
+  --font-size-pc-body-md: 16px;
+  --font-size-pc-body-sm: 14px;
+  --font-size-pc-caption: 12px;
+
+  /* Font Sizes - Mobile */
+  --font-size-mobile-title-lg: 32px;
+  --line-height-mobile-title-lg: 150%;
+  --font-size-mobile-title-md: 28px;
+  --line-height-mobile-title-md: 150%;
+  --font-size-mobile-title-sm: 22px;
+  --line-height-mobile-title-sm: 150%;
+  --font-size-mobile-body-lg: 14px;
+  --line-height-mobile-body-lg: 125%;
+  --font-size-mobile-body-md: 12px;
+  --line-height-mobile-body-md: 125%;
+  --font-size-mobile-body-sm: 10px;
+  --line-height-mobile-body-sm: 125%;
+  --font-size-mobile-caption: 8px;
+  --line-height-mobile-caption: 125%;
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    font-family: "Pretendard", sans-serif;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .text-pc-title-xl {
+    font-size: var(--font-size-pc-title-xl);
+    line-height: var(--line-height-pc-title-xl);
+  }
+  .text-pc-title-lg {
+    font-size: var(--font-size-pc-title-lg);
+    line-height: var(--line-height-pc-title-lg);
+  }
+  .text-pc-title-md {
+    font-size: var(--font-size-pc-title-md);
+    line-height: var(--line-height-pc-title-md);
+  }
+  .text-pc-title-sm {
+    font-size: var(--font-size-pc-title-sm);
+    line-height: var(--line-height-pc-title-sm);
+  }
+  .text-pc-body-xl {
+    font-size: var(--font-size-pc-body-xl);
+    line-height: var(--line-height-pc-body-xl);
+  }
+  .text-pc-body-lg {
+    font-size: var(--font-size-pc-body-lg);
+    line-height: var(--line-height-pc-body-lg);
+  }
+  .text-pc-body-md {
+    font-size: var(--font-size-pc-body-md);
+    line-height: var(--line-height-pc-body-md);
+  }
+  .text-pc-body-sm {
+    font-size: var(--font-size-pc-body-sm);
+    line-height: var(--line-height-pc-body-sm);
+  }
+  .text-pc-caption {
+    font-size: var(--font-size-pc-caption);
+    line-height: var(--line-height-pc-caption);
+  }
+}
+
+/* 커스텀 폰트 클래스 */
+.font-ownglyph {
+  font-family: "Ownglyph_ryurue-Rg", sans-serif !important;
+}
+
+/* SelectItem hover 및 선택 상태만 스타일 적용 */
+[data-radix-select-item]:hover,
+.select-item:hover,
+[role="option"]:hover {
+  background-color: rgba(139, 191, 71, 0.5) !important;
+}
+
+/* 선택된 상태일 때만 */
+[data-radix-select-item][data-state="checked"],
+[data-radix-select-item][aria-selected="true"],
+[role="option"][aria-selected="true"] {
+  background-color: rgba(139, 191, 71, 0.4) !important;
+}
+
+/* 드롭다운이 열렸을 때 기본 highlighted 상태 강제 제거 */
+[data-radix-select-item][data-highlighted]:not(:hover),
+[data-radix-select-item][data-highlighted] {
+  background-color: transparent !important;
+}
+
+/* 모든 Popover 내부 요소의 기본 하이라이트 제거 */
+[data-radix-popover-content] * {
+  background-color: transparent !important;
+}
+
+[data-radix-popover-content] *:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* 체크박스 스타일 변경 */
+[data-state="checked"] {
+  background-color: #8bbf47 !important;
+  border-color: #8bbf47 !important;
+}
+
+[data-state="checked"]:hover {
+  background-color: #5a9934 !important;
+  border-color: #5a9934 !important;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.snap-container {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100vh;
+}
+
+.snap-section {
+  scroll-snap-align: start; /* 시작 부분에 딱 맞춤 */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 튜토리얼 페이지에서 body 스크롤 막기 */
+.no-scroll {
+  overflow: hidden;
+  height: 100vh;
+}
